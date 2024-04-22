@@ -1,1 +1,7 @@
+Here some approach I did to manage a lot of data relative to transportation public system in Bogotá, Colombia. For the reader, the bigger .sql file was automatically generated with a command i made in the postgres cmd, such as an example:
 
+psql -U postgres -p 5433
+
+CREATE TABLE saoh1.seccenso (seccion VARCHAR(50), censo INTEGER);
+
+COPY saoh1.SECCENSO FROM ‘E:\C\Master_geomatica\distribucion\BDD Espaciales\Proyecto PostGIS\datos\datos_proyecto\secciones_censo\censo_seccensalTorrent.csv’ WITH (FORMAT csv, delimiter ';', HEADER true)
