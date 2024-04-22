@@ -1,11 +1,9 @@
 #-*- coding: utf-8 -*-
 '''
-
+Implementacion de GUI para la automatizacion de salida grafica
 '''
 
-#para que funcionara se debió instalar pyqt4 con el python de arcgis asi
-#ir a C:\Python27\ArcGIS10.8\scripts> y luego instalar con
-#.\pip.exe install <path_al_archivo_wheel>\PyQt4-4.11.4-cp27-cp27m-win32.whl
+
 import sys
 from PyQt4 import QtCore, QtGui, uic
 from PyQt4.Qt import QMessageBox, QFileDialog
@@ -33,19 +31,20 @@ class MyDialogClass(QtGui.QDialog, form_class):
         self.legend_check.stateChanged.connect(self.chck_box)
         self.scalebar_check.stateChanged.connect(self.chck_box)
         self.northarrow_check.stateChanged.connect(self.chck_box)
-        #self.progressBar.stateChanged.connect(self.increase_progressBar)
         
-    #def increase_progressBar(self, progressBar):
-     #   progressBar.setValue(0)
-        
+    #funcion para conectar con el boton cancelar        
     def cerrar(self):
         #cerrar
         app.quit()
-        
+    
+    #funcion para establecer los rangos de las spin box que sirven para seleccionar
+    #ano de interes y numero de clases
     def spin_box(self):
         self.year_selector.setRange(1976,2013)
         self.class_selector.setRange(1,30)
     
+    #funcion para habilitar las casillas de los elementos graficos adicionales si 
+    #las cajas son seleccionadas por el usuario
     def chck_box(self):
         if self.legend_check.isChecked():
             self.legend_check.setEnabled(True)
@@ -54,7 +53,7 @@ class MyDialogClass(QtGui.QDialog, form_class):
         if self.northarrow_check.isChecked():
             self.northarrow_check.setEnabled(True)
         
-
+    #funciones secundarias de validacion en caso de que los filtros implementados no cumplan su funcion
     def valida_input(self, cadena):
         #validar valor de entrada
         if cadena.lower().endswith('.mxd'):
@@ -70,7 +69,8 @@ class MyDialogClass(QtGui.QDialog, form_class):
         else:
             QMessageBox.critical(None,"Error","La herramienta solo exporta archivos tipo PDF (.pdf)")
             return None
-     
+    
+    #funciones de los botones de explorador para archivo de entrada (.mxd) y de salida (.pdf)
     def entrada(self):
         fn = QFileDialog.getOpenFileName(None,'Capa de entrada',filter='*.mxd')
         if str(fn) != '':
@@ -81,9 +81,12 @@ class MyDialogClass(QtGui.QDialog, form_class):
         if str(fn) != '':
             self.salida_casilla.setText(str(fn))   
     
+    #funcion de ejeucion de algoritmo
     def ejecutar_auto_layout(self):
+        #establece la barra de progreso en 0 para iniciar el proceso
         self.progressBar.setValue(0)
-        #convertir a string el formato Qstring que devuelve .text()
+        #convertir a string el texto de los elementos de la interfaz que 
+        #almacenan los path de entrada y salida
         input_mxd=self.valida_input(str(self.entrada_casilla.text()))
         output_pdf=self.valida_output(str(self.salida_casilla.text()))
         
@@ -102,10 +105,14 @@ class MyDialogClass(QtGui.QDialog, form_class):
         Extent = lyr.getExtent(True)
         df.extent = Extent 
         arcpy.RefreshActiveView()
+        #establecer la barra de progreso en 20%
         self.progressBar.setValue(20)
-        #elementos graficos y textuales del layout
+        #elementos textuales del layout
         lista_txt = mapp.ListLayoutElements(mxd, "TEXT_ELEMENT")
-        #en el proyecto se les dio un nombre a cada elemento textual
+        #en el proyecto en arcmap se les dio un nombre a cada elemento textual
+        #en caso de que almacenen acentos se convierte a formato unicode
+        #cada elemento del diseño en arcmap adquiere el texto del elemento apropiado en la 
+        #interfaz y cuyo calor fue proveido por el ususario
         for txt in lista_txt:
             if txt.name == 'Title':
                 txt.text = unicode(self.title_map.text())
@@ -118,6 +125,8 @@ class MyDialogClass(QtGui.QDialog, form_class):
             if txt.name == 'autor':
                 txt.text = unicode(self.author_map.text())
         self.progressBar.setValue(40)
+        #si la casilla de leyenda fue seleccionada cargar la capa automaticamente
+        #y modificar la posicion x del elemento leyenda para que sea incluido en la salida grafica
         if self.legend_check.isChecked:
             #incluir el elemento legend
             legend = arcpy.mapping.ListLayoutElements(mxd, "LEGEND_ELEMENT","Legend")[0]
@@ -126,18 +135,20 @@ class MyDialogClass(QtGui.QDialog, form_class):
             legend.elementPositionX = legend.elementPositionX + 29.5
             print("leyend is checked")
         self.progressBar.setValue(60)
+        #si la casilla de la barra de escala grafica es seleccionaa por el usuario
+        #se modifica la posicion x del elemento para ser incluido en la salda grafica
         if self.scalebar_check.isChecked():
             #incluir elemento scale bar
             scalebar = arcpy.mapping.ListLayoutElements(mxd, "MAPSURROUND_ELEMENT",'Scale Bar')[0]
-            
             #modificar la posicion x para que aparezca dentro del layout
             scalebar.elementPositionX = scalebar.elementPositionX + 26.7
             print("scalebar is checked")
         self.progressBar.setValue(80)
+        #si la casilla de la norte es seleccionaa por el usuario
+        #se modifica la posicion x del elemento para ser incluido en la salda grafica
         if self.northarrow_check.isChecked():
             #incluir elemento norte
             north = arcpy.mapping.ListLayoutElements(mxd, "MAPSURROUND_ELEMENT",'North Arrow')[0]
-            
             #modificar la posicion x para que aparezca dentro del layout
             north.elementPositionX = north.elementPositionX + 4.5
             print("northarrow is checked")
@@ -146,6 +157,7 @@ class MyDialogClass(QtGui.QDialog, form_class):
         mapp.ExportToPDF(mxd, output_pdf)
         del mxd
         self.progressBar.setValue(100)
+        #mensaje de proceso terminado
         QMessageBox.information(None,'Proceso','Proceso terminado')
         
 app = QtGui.QApplication(sys.argv)
