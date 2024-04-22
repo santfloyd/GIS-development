@@ -1,0 +1,50 @@
+CREATE SCHEMA video;
+
+CREATE DOMAIN video.d_ano as integer CHECK ((VALUE >= 1900 AND VALUE <=2025) OR (VALUE = -1));
+
+CREATE DOMAIN video.d_pais as varchar check (value in ('EEUU','España','Italia','Francia','Desconocido'));
+
+CREATE TABLE video.peliculas (titulo varchar,
+							 ano video.d_ano default -1,
+							 anoespana video.d_ano default -1 not null,
+							 pais video.d_pais default 'Desconocido' not null,
+							 protagonista varchar not null,
+							 descripcion varchar,
+							 constraint pk_titulo_ano primary key (titulo, ano), 
+							 CONSTRAINT check_ano check (anoespana=-1 or (ano <> -1 and anoespana >= ano)));
+
+
+INSERT INTO video.peliculas(titulo, ano, anoespana, pais, protagonista, descripcion)
+Values('The Terminator', 1984, 1984, 'EEUU', 'Arnold Schwarzenegger', 'Sci-Fi');
+INSERT INTO video.peliculas(titulo, ano, anoespana, pais, protagonista, descripcion)
+Values('El Padrino', 1974, 1974, 'EEUU', 'Al Pacino', 'Crime');
+INSERT INTO video.peliculas(titulo, ano, anoespana, pais, protagonista, descripcion)
+Values('Blade Runner', 1982, 1982, 'EEUU', 'Harrison Ford', 'Sci-Fi');
+INSERT INTO video.peliculas(titulo, ano, anoespana, pais, protagonista, descripcion)
+Values('Uno de los nuestros', 1990, 1990, 'EEUU', 'Robert De Niro', 'Drama');
+
+SELECT * FROM video.peliculas
+
+INSERT INTO video.peliculas(titulo, ano, anoespana, pais, protagonista, descripcion)
+Values('Uno de los nuestros', 1990, 1990, 'UK', 'Robert De Niro', 'Drama');
+
+INSERT INTO video.peliculas(titulo, anoespana, pais, protagonista, descripcion,ano)
+Values('Ciudadano Kane', 1941, 'EEUU', 'Orson Welles', 'Drama',1941);
+
+ALTER DOMAIN video.d_pais DROP CONSTRAINT d_pais_check;
+
+ALTER DOMAIN video.d_pais ADD CONSTRAINT d_pais_check CHECK(value::text == ANY(ARRAY['EEUU'::varchar, 'Francia'::varchar,'Desconocido'::varchar]::text[]));
+
+UPDATE video.peliculas set pais = 'USA' where pais='EEUU';
+
+ALTER DOMAIN video.d_pais add constraint d_pais_check check (value in( 'USA', 'España','Italia', 'Francia','Desconocido'));
+
+ALTER TABLE video.peliculas ADD COLUMN difanos INTEGER DEFAULT -1
+
+UPDATE video.peliculas set difanos = anoespana - ano where ano <> -1 and anoespana <> -1
+
+
+
+
+
+
